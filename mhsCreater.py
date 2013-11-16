@@ -3,6 +3,7 @@
 import os
 import csv
 import shutil
+import zipfile
 
 '''
 files = os.listdir("C:\\Users\\alantrue\\Desktop\\work")
@@ -18,7 +19,7 @@ def parseInfo():
 	#解析出0病歷號, 1姓名, 2生日, 3初診日, 4性別, 5階段, 6紀錄
 	csvfile = open('C:\\Users\\alantrue\\Desktop\\work\\info.csv', 'rb')
 
-	i = 1
+	i = 0
 	for row in csv.reader(csvfile, delimiter=',', quotechar='"'):
 		fileSrc1 = u''
 		fileSrc2 = u''
@@ -64,18 +65,31 @@ def parseInfo():
 			fileDes2 = tempPath.encode('big5') + fileDes2
 			print row[0], row[1], row[2], row[3], row[4], row[5], row[6]
 			print i, fileSrc1, fileSrc2, fileDes1, fileDes2
-			#建立拷貝
-			copy1 = shutil.copyfile(fileSrc1, fileDes1.decode('big5'))
-			copy2 = shutil.copyfile(fileSrc2, fileDes2.decode('big5'))
-
-		i = i + 1
-		if i > 3:
-			break
-
-		#改成zip
+			#建立拷貝zip
+			shutil.copyfile(fileSrc1, fileDes1.decode('big5'))
+			shutil.copyfile(fileSrc2, fileDes2.decode('big5'))
 		#解壓縮
+			zf = zipfile.ZipFile(fileDes1.decode('big5'), 'r')
+			data = zf.read('word/document.xml')
+			data = data.decode('utf8')
 		#填入資料
+			#病歷號碼
+			data = data.replace(u'123456', row[0].decode('big5'))
+			#名字
+			data = data.replace(u'我的名字', row[1].decode('big5'))
+			#生日
+			data = data.replace(u'birth', row[2].decode('big5'))
+			#初診日期
+			#男女
+
+			print data
+			#data.encode('utf8')
+			#zf.write(data,'word/document.xml')
 		#壓縮回zip
 		#改回docx
+
+		i = i + 1
+		if i > 1:
+			break
 
 parseInfo()
