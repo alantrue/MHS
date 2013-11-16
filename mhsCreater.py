@@ -9,8 +9,9 @@ import datetime
 import re
 import random
 
-workPath = u'C:/Users/alantrue/Desktop/work/'
-tempPath = u'C:/Users/alantrue/Desktop/work/temp/'
+workPath = os.getcwd() + '/'
+outputPath = workPath + u'病歷表/'
+infoFile = workPath + 'info.csv'
 files = (u'無口語紀錄表.docx', u'無口語評估表.docx', u'詞彙簡單句紀錄表.docx', u'詞彙簡單句評估表.docx', u'構音紀錄表.docx', u'構音評估表.docx', u'複雜句故事敘述紀錄表.docx', u'複雜句故事敘述評估表.docx')
 
 def remove_from_zip(zipfname, *filenames):
@@ -39,9 +40,14 @@ def randomProgress(p):
 			if random.randint(0,99) < 25:
 				p[i] += 1
 
+def removeFileInFolder(folder):
+	filelist = [f for f in os.listdir(folder) if f.endswith(".docx")]
+	for f in filelist:
+		os.remove(folder + f)
+
 def parseInfo():
 	#解析出0病歷號, 1姓名, 2生日, 3初診日, 4性別, 5階段, 6紀錄
-	csvfile = open('C:\\Users\\alantrue\\Desktop\\work\\info.csv', 'rb')
+	csvfile = open(infoFile, 'rb')
 
 	i = 0
 	for row in csv.reader(csvfile, delimiter=',', quotechar='"'):
@@ -82,23 +88,25 @@ def parseInfo():
 		fileDes2 = row[0] + row[1] + fileDes2
 
 		if fileSrc1 != u'' and fileSrc2 != u'':
-
 			fileSrc1 = workPath + fileSrc1
 			fileSrc2 = workPath + fileSrc2
-			fileDes1 = tempPath.encode('big5') + fileDes1
-			fileDes2 = tempPath.encode('big5') + fileDes2
-			#print row[0], row[1], row[2], row[3], row[4], row[5], row[6]
-			#print i, fileSrc1, fileSrc2, fileDes1, fileDes2
-			#建立拷貝zip
-			shutil.copyfile(fileSrc1, fileDes1.decode('big5'))
-			shutil.copyfile(fileSrc2, fileDes2.decode('big5'))
+			fileDes1 = outputPath.encode('big5') + fileDes1
+			fileDes2 = outputPath.encode('big5') + fileDes2
 
+			#建立拷貝zip
+			try:
+				shutil.copyfile(fileSrc1, fileDes1.decode('big5'))
+				shutil.copyfile(fileSrc2, fileDes2.decode('big5'))
+			except IOError as e:
+				print u'無法產生 {0} {1} 的病歷表'.encode('big5').format(row[0], row[1])
+				print u'進行中'.encode('big5')
+				continue
+
+			#產生病歷表
 			createMHS(row, fileDes1)
 			createMHS(row, fileDes2)
 
 		i = i + 1
-		if i > 3:
-			break
 
 def createMHS(row, fileDes):	
 	#解壓縮
@@ -121,6 +129,7 @@ def createMHS(row, fileDes):
 			birth = birth[1:]
 
 		data = re.sub(r'\bbirth\b', birth.decode('big5'), data)
+
 		#初診日期
 		firstDate = row[3].decode('big5').split('/')
 		data = re.sub(r'\bjkl\b', firstDate[0], data)
@@ -175,4 +184,7 @@ def createMHS(row, fileDes):
 		filename = os.path.splitext(fileDes.decode('big5'))[0]
 		os.rename(fileDes, filename + ".docx")
 
+print u'進行中'.encode('big5')
+removeFileInFolder(outputPath)
 parseInfo()
+print u'完成'.encode('big5')
